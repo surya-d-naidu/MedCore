@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, Mail, UserCircle, Lock, ShieldCheck } from "lucide-react";
 
 const registerSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -54,108 +54,133 @@ export default function RegisterForm() {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="username"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Username</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter a username"
-                  {...field}
-                  autoComplete="username"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 gap-4">
+          <FormField
+            control={form.control}
+            name="username"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-muted-foreground font-medium">Username</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      className="form-input-clean pl-10 h-10 rounded-lg"
+                      placeholder="Enter a username"
+                      {...field}
+                      autoComplete="username"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage className="text-xs font-medium" />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email</FormLabel>
-              <FormControl>
-                <Input
-                  type="email"
-                  placeholder="Enter your email"
-                  {...field}
-                  autoComplete="email"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-muted-foreground font-medium">Email</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      className="form-input-clean pl-10 h-10 rounded-lg"
+                      type="email"
+                      placeholder="Enter your email"
+                      {...field}
+                      autoComplete="email"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage className="text-xs font-medium" />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="fullName"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Full Name</FormLabel>
-              <FormControl>
-                <Input
-                  placeholder="Enter your full name"
-                  {...field}
-                  autoComplete="name"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="fullName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-muted-foreground font-medium">Full Name</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <UserCircle className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      className="form-input-clean pl-10 h-10 rounded-lg"
+                      placeholder="Enter your full name"
+                      {...field}
+                      autoComplete="name"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage className="text-xs font-medium" />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="password"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Password</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="Create a password"
-                  {...field}
-                  autoComplete="new-password"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-muted-foreground font-medium">Password</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      className="form-input-clean pl-10 h-10 rounded-lg"
+                      type="password"
+                      placeholder="Create a password"
+                      {...field}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage className="text-xs font-medium" />
+              </FormItem>
+            )}
+          />
 
-        <FormField
-          control={form.control}
-          name="confirmPassword"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Confirm Password</FormLabel>
-              <FormControl>
-                <Input
-                  type="password"
-                  placeholder="Confirm your password"
-                  {...field}
-                  autoComplete="new-password"
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-muted-foreground font-medium">Confirm Password</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <ShieldCheck className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+                    <Input
+                      className="form-input-clean pl-10 h-10 rounded-lg"
+                      type="password"
+                      placeholder="Confirm your password"
+                      {...field}
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage className="text-xs font-medium" />
+              </FormItem>
+            )}
+          />
+        </div>
 
         <Button
           type="submit"
-          className="w-full mt-2 bg-primary-800 text-white hover:bg-primary-700"
+          className="w-full h-11 mt-2 btn-gradient rounded-lg"
           disabled={registerMutation.isPending}
         >
-          {registerMutation.isPending && (
+          {registerMutation.isPending ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <span className="inline-flex items-center">
+              <ShieldCheck className="mr-2 h-4 w-4" /> Create Account
+            </span>
           )}
-          Register
         </Button>
       </form>
     </Form>
