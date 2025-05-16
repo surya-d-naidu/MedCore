@@ -1,4 +1,4 @@
-import { and, eq, gte, lte, desc, like, or } from "drizzle-orm";
+import { and, eq, gte, lte, desc, like, or, sql } from "drizzle-orm";
 import { db } from "./db";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
@@ -406,29 +406,17 @@ export class DatabaseStorage implements IStorage {
   }> {
     const today = new Date().toISOString().split('T')[0];
     
-    // Get total patients
-    const patientCount = await db.select({ count: db.fn.count() }).from(patients);
-    
-    // Get today's appointments
-    const todayAppointmentsCount = await db.select({ count: db.fn.count() })
-      .from(appointments)
-      .where(eq(appointments.date, today));
-    
-    // Get available doctors
-    const availableDoctorsCount = await db.select({ count: db.fn.count() })
-      .from(doctors)
-      .where(eq(doctors.status, 'available'));
-    
-    // Get available rooms
-    const availableRoomsCount = await db.select({ count: db.fn.count() })
-      .from(rooms)
-      .where(eq(rooms.occupied, false));
+    // Perform counts directly with the pool
+    const patientCountResult = await pool.query('SELECT COUNT(*) as count FROM patients');
+    const appointmentCountResult = await pool.query('SELECT COUNT(*) as count FROM appointments WHERE date = $1', [today]);
+    const doctorCountResult = await pool.query('SELECT COUNT(*) as count FROM doctors WHERE status = $1', ['available']);
+    const roomCountResult = await pool.query('SELECT COUNT(*) as count FROM rooms WHERE occupied = $1', [false]);
     
     return {
-      totalPatients: Number(patientCount[0].count),
-      todayAppointments: Number(todayAppointmentsCount[0].count),
-      availableDoctors: Number(availableDoctorsCount[0].count),
-      availableRooms: Number(availableRoomsCount[0].count)
+      totalPatients: parseInt(patientCountResult.rows[0].count, 10),
+      todayAppointments: parseInt(appointmentCountResult.rows[0].count, 10),
+      availableDoctors: parseInt(doctorCountResult.rows[0].count, 10),
+      availableRooms: parseInt(roomCountResult.rows[0].count, 10)
     };
   }
 }

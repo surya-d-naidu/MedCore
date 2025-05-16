@@ -1,15 +1,24 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
+import { Express, Request, Response, NextFunction } from "express";
 import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User } from "@shared/schema";
+import type { User as UserType } from "@shared/schema";
 
+// Augment the Express namespace with our User type
 declare global {
   namespace Express {
-    interface User extends User {}
+    // Use User type from schema as the basis for session user
+    interface User {
+      id: number;
+      username: string;
+      email: string;
+      fullName: string;
+      role: string;
+      // We don't include password as it should never be part of the user object in session
+    }
   }
 }
 
@@ -139,7 +148,7 @@ export function setupAuth(app: Express) {
 export function requireRole(role: string | string[]) {
   const roles = Array.isArray(role) ? role : [role];
   
-  return (req: Express.Request, res: Express.Response, next: Express.NextFunction) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     if (!req.isAuthenticated()) {
       return res.status(401).json({ message: "Unauthorized" });
     }

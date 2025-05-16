@@ -1,6 +1,4 @@
 import { Switch, Route } from "wouter";
-import { queryClient } from "./lib/queryClient";
-import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
@@ -15,33 +13,28 @@ import WardsPage from "@/pages/wards-page";
 import BillingPage from "@/pages/billing-page";
 import SettingsPage from "@/pages/settings-page";
 import { ProtectedRoute } from "./lib/protected-route";
-
-function Router() {
-  return (
-    <Switch>
-      <Route path="/auth" component={AuthPage} />
-      <ProtectedRoute path="/" component={DashboardPage} />
-      <ProtectedRoute path="/doctors" component={DoctorsPage} />
-      <ProtectedRoute path="/patients" component={PatientsPage} />
-      <ProtectedRoute path="/appointments" component={AppointmentsPage} />
-      <ProtectedRoute path="/medical-records" component={MedicalRecordsPage} />
-      <ProtectedRoute path="/prescriptions" component={PrescriptionsPage} />
-      <ProtectedRoute path="/wards" component={WardsPage} />
-      <ProtectedRoute path="/billing" component={BillingPage} />
-      <ProtectedRoute path="/settings" component={SettingsPage} />
-      <Route component={NotFound} />
-    </Switch>
-  );
-}
+import { AuthProvider } from "./hooks/use-auth";
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <AuthProvider>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <Switch>
+          <Route path="/auth" component={AuthPage} />
+          <ProtectedRoute path="/" component={DashboardPage} />
+          <ProtectedRoute path="/doctors" component={DoctorsPage} />
+          <ProtectedRoute path="/patients" component={PatientsPage} />
+          <ProtectedRoute path="/appointments" component={AppointmentsPage} />
+          <ProtectedRoute path="/medical-records" component={MedicalRecordsPage} />
+          <ProtectedRoute path="/prescriptions" component={PrescriptionsPage} />
+          <ProtectedRoute path="/wards" component={WardsPage} />
+          <ProtectedRoute path="/billing" component={BillingPage} />
+          <ProtectedRoute path="/settings" component={SettingsPage} />
+          <Route component={NotFound} />
+        </Switch>
       </TooltipProvider>
-    </QueryClientProvider>
+    </AuthProvider>
   );
 }
 
