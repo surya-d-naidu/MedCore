@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import { LucideIcon } from "lucide-react";
+import { ArrowDown, ArrowUp, LucideIcon } from "lucide-react";
 
 interface StatsCardProps {
   title: string;
@@ -23,31 +23,49 @@ export function StatsCard({
   trend,
 }: StatsCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-5 border border-neutral-100">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-neutral-500 text-sm">{title}</p>
-          <h3 className="text-2xl font-semibold mt-1">{value}</h3>
-          {trend && (
-            <p className={cn(
-              "text-sm mt-1",
-              trend.direction === "up" ? "text-green-600" : "text-red-600"
-            )}>
-              <span className="inline-block mr-1">
-                {trend.direction === "up" ? "↑" : "↓"}
-              </span>
-              <span>{trend.value}</span>
-              <span className="text-neutral-500 ml-1">{trend.label}</span>
-            </p>
-          )}
+    <div className="bg-white rounded-xl shadow-sm p-6 border-0 hover:shadow-md transition-shadow duration-200">
+      <div className="flex items-start justify-between">
+        <div className="flex flex-col">
+          <div className={cn(
+            "w-12 h-12 rounded-xl flex items-center justify-center mb-3",
+            iconBgColor
+          )}>
+            <Icon className={cn("h-6 w-6", iconColor)} strokeWidth={1.5} />
+          </div>
+          <h3 className="text-3xl font-bold mt-1">{value}</h3>
+          <p className="text-muted-foreground text-sm mt-1">{title}</p>
         </div>
-        <div className={cn(
-          "w-12 h-12 rounded-full flex items-center justify-center",
-          iconBgColor
-        )}>
-          <Icon className={cn("text-xl", iconColor)} />
-        </div>
+        
+        {trend && (
+          <div className={cn(
+            "flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-medium", 
+            trend.direction === "up" 
+              ? "bg-emerald-50 text-emerald-600" 
+              : "bg-red-50 text-red-600"
+          )}>
+            {trend.direction === "up" ? (
+              <ArrowUp className="h-3 w-3" />
+            ) : (
+              <ArrowDown className="h-3 w-3" />
+            )}
+            <span>{trend.value}</span>
+          </div>
+        )}
       </div>
+      
+      {trend && (
+        <div className="mt-4 pt-3 border-t border-border">
+          <p className="text-xs text-muted-foreground flex items-center">
+            <span>{trend.label}</span>
+            <span className={cn(
+              "ml-auto px-1.5 py-0.5 rounded text-xs",
+              trend.direction === "up" ? "text-emerald-600" : "text-red-600"
+            )}>
+              {trend.direction === "up" ? "Increasing" : "Decreasing"}
+            </span>
+          </p>
+        </div>
+      )}
     </div>
   );
 }

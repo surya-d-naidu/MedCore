@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatsCard } from "@/components/ui/stats-card";
-import { Users, CalendarCheck, UserRound, Bed } from "lucide-react";
+import { Users, CalendarClock, Stethoscope, Hospital } from "lucide-react";
 
 interface DashboardStats {
   totalPatients: number;
@@ -19,14 +19,12 @@ export default function StatsCards({ stats, isLoading }: StatsCardsProps) {
     return (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {Array(4).fill(0).map((_, i) => (
-          <div key={i} className="bg-white rounded-lg shadow-sm p-5 border border-neutral-100">
-            <div className="flex items-center justify-between">
-              <div className="w-full">
-                <Skeleton className="h-4 w-32 mb-3" />
-                <Skeleton className="h-8 w-16 mb-2" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-              <Skeleton className="h-12 w-12 rounded-full" />
+          <div key={i} className="bg-white rounded-xl shadow-sm p-6 border-0">
+            <div className="flex flex-col">
+              <Skeleton className="h-12 w-12 rounded-xl mb-3" />
+              <Skeleton className="h-8 w-16 mb-2" />
+              <Skeleton className="h-4 w-24 mb-3" />
+              <Skeleton className="h-4 w-full mt-4" />
             </div>
           </div>
         ))}
@@ -40,8 +38,8 @@ export default function StatsCards({ stats, isLoading }: StatsCardsProps) {
         title="Total Patients"
         value={stats.totalPatients}
         icon={Users}
-        iconColor="text-primary-700"
-        iconBgColor="bg-blue-50"
+        iconColor="text-primary"
+        iconBgColor="bg-primary/10"
         trend={{
           value: "4.75%",
           direction: "up",
@@ -52,9 +50,9 @@ export default function StatsCards({ stats, isLoading }: StatsCardsProps) {
       <StatsCard
         title="Today's Appointments"
         value={stats.todayAppointments}
-        icon={CalendarCheck}
-        iconColor="text-accent-600"
-        iconBgColor="bg-indigo-50"
+        icon={CalendarClock}
+        iconColor="text-indigo-600"
+        iconBgColor="bg-indigo-100"
         trend={{
           value: "2.15%",
           direction: "down",
@@ -65,9 +63,9 @@ export default function StatsCards({ stats, isLoading }: StatsCardsProps) {
       <StatsCard
         title="Available Doctors"
         value={stats.availableDoctors}
-        icon={UserRound}
-        iconColor="text-secondary-700"
-        iconBgColor="bg-green-50"
+        icon={Stethoscope}
+        iconColor="text-secondary"
+        iconBgColor="bg-secondary/10"
         trend={{
           value: "2",
           direction: "up",
@@ -78,9 +76,9 @@ export default function StatsCards({ stats, isLoading }: StatsCardsProps) {
       <StatsCard
         title="Available Rooms"
         value={stats.availableRooms}
-        icon={Bed}
-        iconColor="text-purple-600"
-        iconBgColor="bg-purple-50"
+        icon={Hospital}
+        iconColor="text-violet-600"
+        iconBgColor="bg-violet-100"
         trend={{
           value: "3",
           direction: "down",
