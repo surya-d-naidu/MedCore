@@ -208,6 +208,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/appointments/:id", async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      // Instead of deleting, we'll update the status to cancelled
+      const appointment = await storage.updateAppointment(id, { status: "cancelled" });
+      res.json(appointment);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // Medical Records routes
   app.get("/api/medical-records", requireRole(["admin", "doctor"]), async (req, res, next) => {
     try {

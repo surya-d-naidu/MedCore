@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 interface AppointmentFormProps {
   appointment?: Appointment;
   onSuccess: () => void;
+  patientId?: number; // Optional patient ID for patient dashboard
 }
 
 // Extended schema for the form with date and time transformation
@@ -50,13 +51,15 @@ const appointmentFormSchema = insertAppointmentSchema
 
 type AppointmentFormValues = z.input<typeof appointmentFormSchema>;
 
-export default function AppointmentForm({ appointment, onSuccess }: AppointmentFormProps) {
+export default function AppointmentForm({ appointment, onSuccess, patientId }: AppointmentFormProps) {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedDoctor, setSelectedDoctor] = useState<(Doctor & { user?: { fullName: string } }) | null>(null);
 
   // Fetch patients for dropdown
   const { data: patients, isLoading: isLoadingPatients } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
+    enabled: !patientId, // Don't fetch patients if patientId is provided
   });
 
   // Fetch doctors for dropdown
@@ -67,7 +70,7 @@ export default function AppointmentForm({ appointment, onSuccess }: AppointmentF
   const form = useForm<AppointmentFormValues>({
     resolver: zodResolver(appointmentFormSchema),
     defaultValues: {
-      patientId: appointment?.patientId || 0,
+      patientId: patientId || appointment?.patientId || 0,
       doctorId: appointment?.doctorId || 0,
       date: appointment ? new Date(appointment.date) : new Date(),
       time: appointment?.time?.toString().slice(0, 5) || "", // Format HH:MM
@@ -89,18 +92,26 @@ export default function AppointmentForm({ appointment, onSuccess }: AppointmentF
         reason: appointment.reason,
         notes: appointment.notes || "",
       });
+    } else if (patientId) {
+      // If patientId is provided directly (from patient dashboard)
+      form.setValue("patientId", patientId);
     }
-  }, [appointment, patients, doctors, form]);
+  }, [appointment, patients, doctors, form, patientId]);
 
   const onSubmit = async (data: AppointmentFormValues) => {
     // Validate that both patient and doctor are selected
-    if (!data.patientId) {
+    if (!data.patientId && !patientId) {
       toast({
         title: "Error",
         description: "Please select a patient",
         variant: "destructive",
       });
       return;
+    }
+
+    // If patientId is provided directly (from patient dashboard), use that instead
+    if (patientId) {
+      data.patientId = patientId;
     }
 
     if (!data.doctorId) {
