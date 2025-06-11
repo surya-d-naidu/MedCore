@@ -129,9 +129,14 @@ export default function LoginForm() {
           )}
         </Button>
         
-        <div className="mt-6 text-center text-sm text-muted-foreground">
+        {/* <div className="mt-6 text-center text-sm text-muted-foreground">
           <p>Default credentials: admin / admin123</p>
-        </div>
+        </div> */}
+        {process.env.NODE_ENV === "development" && (
+          <div className="mt-6 text-center text-sm text-muted-foreground">
+            <p>Default credentials: admin / admin123</p>
+          </div>
+        )}
       </form>
     </Form>
   );

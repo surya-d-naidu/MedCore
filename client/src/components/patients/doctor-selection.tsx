@@ -106,7 +106,8 @@ export default function DoctorSelection({ patientId }: DoctorSelectionProps) {
               <CardContent className="flex flex-col items-center text-center">
                 <Avatar className="h-24 w-24 mb-4">
                   <AvatarFallback className="bg-gradient-to-br from-primary to-primary/75 text-white text-xl">
-                    {doctor.user?.fullName.split(' ').map(n => n[0]).join('')}
+                    {/* {doctor.user?.fullName.split(' ').map(n => n[0]).join('')} */}
+                    {doctor.user?.fullName?.split(' ').map(n => n[0]).join('').toUpperCase() || 'DR'}
                   </AvatarFallback>
                 </Avatar>
                 <h3 className="text-lg font-semibold">Dr. {doctor.user?.fullName}</h3>

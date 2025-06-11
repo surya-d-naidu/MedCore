@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Menu, Bell, ChevronDown, Search, User, LogOut, Settings } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +23,7 @@ interface DashboardLayoutProps {
 function MainLayout({ children, title }: DashboardLayoutProps) {
   const { toggle } = useSidebar();
   const { user, logoutMutation } = useAuth();
+  const { toast } = useToast();
 
   const initials = user?.fullName
     ? user.fullName
@@ -109,7 +111,17 @@ function MainLayout({ children, title }: DashboardLayoutProps) {
                   </DropdownMenuItem>
                   <DropdownMenuItem 
                     className="flex items-center cursor-pointer rounded-lg focus:bg-muted text-destructive focus:text-destructive p-2"
-                    onClick={() => logoutMutation.mutate()}
+                    onClick={() => {
+                      logoutMutation.mutate(undefined, {
+                        onError: () => {
+                          toast({
+                            title: "Logout failed",
+                            description: "Please try again or clear your session manually.",
+                            variant: "destructive",
+                          });
+                        },
+                      });
+                    }}
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
