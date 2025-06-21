@@ -31,7 +31,10 @@ export interface IStorage {
   getDoctorByUserId(userId: number): Promise<Doctor | undefined>;
   updateDoctor(id: number, data: Partial<InsertDoctor>): Promise<Doctor>;
   getAllDoctors(): Promise<Doctor[]>;
+  getAllDoctorsWithUsers(): Promise<(Doctor & { user: User })[]>;
+  getDoctorWithUser(id: number): Promise<(Doctor & { user: User }) | undefined>;
   searchDoctors(query: string): Promise<Doctor[]>;
+  getSpecializations(): Promise<string[]>;
   
   // Patient management
   createPatient(patient: InsertPatient): Promise<Patient>;
@@ -48,6 +51,7 @@ export interface IStorage {
   getAppointmentsByDoctor(doctorId: number): Promise<Appointment[]>;
   getAppointmentsByDate(date: Date): Promise<Appointment[]>;
   getAllAppointments(): Promise<Appointment[]>;
+  getAllAppointmentsWithDetails(): Promise<(Appointment & { patient: Patient; doctor: Doctor & { user: User } })[]>;
   
   // Medical Records management
   createMedicalRecord(record: InsertMedicalRecord): Promise<MedicalRecord>;
@@ -75,6 +79,7 @@ export interface IStorage {
   updateRoom(id: number, data: Partial<InsertRoom>): Promise<Room>;
   getRoomsByWard(wardId: number): Promise<Room[]>;
   getAllRooms(): Promise<Room[]>;
+  getAllRoomsWithPatient(): Promise<(Room & { patient: Patient | null; ward: Ward })[]>;
   
   // Billing management
   createBill(bill: InsertBill): Promise<Bill>;
@@ -161,6 +166,31 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(doctors);
   }
 
+  async getAllDoctorsWithUsers(): Promise<(Doctor & { user: User })[]> {
+    const doctorsData = await db.select()
+      .from(doctors)
+      .innerJoin(users, eq(doctors.userId, users.id));
+    
+    return doctorsData.map(({ doctors, users }) => ({
+      ...doctors,
+      user: users
+    }));
+  }
+
+  async getDoctorWithUser(id: number): Promise<(Doctor & { user: User }) | undefined> {
+    const [doctorData] = await db.select()
+      .from(doctors)
+      .innerJoin(users, eq(doctors.userId, users.id))
+      .where(eq(doctors.id, id));
+    
+    if (!doctorData) return undefined;
+    
+    return {
+      ...doctorData.doctors,
+      user: doctorData.users
+    };
+  }
+
   async searchDoctors(query: string): Promise<Doctor[]> {
     const doctorsData = await db.select()
       .from(doctors)
@@ -173,6 +203,13 @@ export class DatabaseStorage implements IStorage {
       );
     
     return doctorsData.map(({ doctors }) => doctors);
+  }
+
+  async getSpecializations(): Promise<string[]> {
+    const specializations = await db.select({ specialization: doctors.specialization })
+      .from(doctors)
+      .groupBy(doctors.specialization);
+    return specializations.map((doc: { specialization: string }) => doc.specialization);
   }
 
   // Patient management
@@ -251,6 +288,23 @@ export class DatabaseStorage implements IStorage {
 
   async getAllAppointments(): Promise<Appointment[]> {
     return await db.select().from(appointments);
+  }
+
+  async getAllAppointmentsWithDetails(): Promise<(Appointment & { patient: Patient; doctor: Doctor & { user: User } })[]> {
+    const appointmentsData = await db.select()
+      .from(appointments)
+      .innerJoin(patients, eq(appointments.patientId, patients.id))
+      .innerJoin(doctors, eq(appointments.doctorId, doctors.id))
+      .innerJoin(users, eq(doctors.userId, users.id));
+    
+    return appointmentsData.map(({ appointments, patients, doctors, users }) => ({
+      ...appointments,
+      patient: patients,
+      doctor: {
+        ...doctors,
+        user: users
+      }
+    }));
   }
 
   // Medical Records management
@@ -366,6 +420,19 @@ export class DatabaseStorage implements IStorage {
 
   async getAllRooms(): Promise<Room[]> {
     return await db.select().from(rooms);
+  }
+
+  async getAllRoomsWithPatient(): Promise<(Room & { patient: Patient | null; ward: Ward })[]> {
+    const roomsData = await db.select()
+      .from(rooms)
+      .leftJoin(patients, eq(rooms.patientId, patients.id))
+      .innerJoin(wards, eq(rooms.wardId, wards.id));
+    
+    return roomsData.map(({ rooms, patients, wards }) => ({
+      ...rooms,
+      patient: patients,
+      ward: wards
+    }));
   }
 
   // Billing management

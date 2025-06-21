@@ -155,10 +155,14 @@ export default function DoctorForm({ doctor, onSuccess }: DoctorFormProps) {
                   <Select
                     value={field.value?.toString() || ""}
                     onValueChange={(value) => {
-                      field.onChange(value ? parseInt(value) : undefined);
+                      if (value === "placeholder") {
+                        field.onChange(undefined);
+                      } else {
+                        field.onChange(value ? parseInt(value) : undefined);
+                      }
                       
                       // If a user is selected, populate related fields
-                      if (value) {
+                      if (value && value !== "placeholder") {
                         const selectedUser = users?.find(u => u.id === parseInt(value));
                         if (selectedUser) {
                           form.setValue("fullName", selectedUser.fullName);
@@ -173,7 +177,7 @@ export default function DoctorForm({ doctor, onSuccess }: DoctorFormProps) {
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Create New User</SelectItem>
+                      <SelectItem value="placeholder">Create New User</SelectItem>
                       {isLoadingUsers ? (
                         <div className="flex items-center justify-center p-2">
                           <Loader2 className="h-4 w-4 animate-spin text-neutral-500" />

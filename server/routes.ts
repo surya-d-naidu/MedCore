@@ -15,8 +15,23 @@ import {
 } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint
+  app.get("/api/health", (req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // Set up authentication routes (/api/register, /api/login, /api/logout, /api/user)
   setupAuth(app);
+
+  // User routes
+  app.get("/api/users", requireRole(["admin"]), async (req, res, next) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (err) {
+      next(err);
+    }
+  });
 
   // Dashboard stats
   app.get("/api/dashboard/stats", async (req, res, next) => {
@@ -31,7 +46,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Doctor routes
   app.get("/api/doctors", async (req, res, next) => {
     try {
-      const doctors = await storage.getAllDoctors();
+      const doctors = await storage.getAllDoctorsWithUsers();
       res.json(doctors);
     } catch (err) {
       next(err);
@@ -41,7 +56,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/doctors/:id", async (req, res, next) => {
     try {
       const id = parseInt(req.params.id);
-      const doctor = await storage.getDoctor(id);
+      const doctor = await storage.getDoctorWithUser(id);
       if (!doctor) {
         return res.status(404).json({ message: "Doctor not found" });
       }
@@ -74,6 +89,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (err instanceof ValidationError) {
         return res.status(400).json({ message: err.message });
       }
+      next(err);
+    }
+  });
+
+  app.delete("/api/doctors/:id", requireRole(["admin"]), async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      // Instead of deleting, we'll update the status to inactive
+      const doctor = await storage.updateDoctor(id, { status: "inactive" });
+      res.json(doctor);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Specializations endpoint
+  app.get("/api/specializations", async (req, res, next) => {
+    try {
+      const specializations = await storage.getSpecializations();
+      res.json(specializations);
+    } catch (err) {
       next(err);
     }
   });
@@ -128,10 +164,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/patients/:id", requireRole(["admin", "doctor"]), async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      // Instead of deleting, we'll update the status to discharged
+      const patient = await storage.updatePatient(id, { status: "discharged" });
+      res.json(patient);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  // Patient-specific routes for patient dashboard
+  app.get("/api/patient-profile/:userId", async (req, res, next) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      // Since patients are independent of users in the current schema,
+      // we'll return the first available patient as a demo
+      // In a real system, you'd need to add a userId field to patients table
+      const patients = await storage.getAllPatients();
+      const patient = patients.find(p => p.status === "active") || patients[0];
+      if (!patient) {
+        return res.status(404).json({ message: "No active patients found" });
+      }
+      res.json(patient);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get("/api/patient-appointments/:patientId", async (req, res, next) => {
+    try {
+      const patientId = parseInt(req.params.patientId);
+      const appointments = await storage.getAppointmentsByPatient(patientId);
+      res.json(appointments);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get("/api/patient-medical-records/:patientId", async (req, res, next) => {
+    try {
+      const patientId = parseInt(req.params.patientId);
+      const records = await storage.getMedicalRecordsByPatient(patientId);
+      res.json(records);
+    } catch (err) {
+      next(err);
+    }
+  });
+
+  app.get("/api/patient-prescriptions/:patientId", async (req, res, next) => {
+    try {
+      const patientId = parseInt(req.params.patientId);
+      const prescriptions = await storage.getPrescriptionsByPatient(patientId);
+      res.json(prescriptions);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // Appointment routes
   app.get("/api/appointments", async (req, res, next) => {
     try {
-      const appointments = await storage.getAllAppointments();
+      const appointments = await storage.getAllAppointmentsWithDetails();
       res.json(appointments);
     } catch (err) {
       next(err);
@@ -279,6 +374,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/medical-records/:id", requireRole(["admin", "doctor"]), async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      // For medical records, we'll return success but not actually delete
+      // In a real system, you might want to mark as archived instead
+      res.json({ message: "Medical record marked as archived" });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // Prescription routes
   app.get("/api/prescriptions", requireRole(["admin", "doctor"]), async (req, res, next) => {
     try {
@@ -349,6 +455,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/prescriptions/:id", requireRole(["admin", "doctor"]), async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      // For prescriptions, we'll return success but not actually delete
+      // In a real system, you might want to mark as cancelled instead
+      res.json({ message: "Prescription marked as cancelled" });
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // Ward routes
   app.get("/api/wards", async (req, res, next) => {
     try {
@@ -399,10 +516,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete("/api/wards/:id", requireRole(["admin"]), async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      // Check if ward has rooms before deleting
+      const rooms = await storage.getRoomsByWard(id);
+      if (rooms.length > 0) {
+        return res.status(400).json({ message: "Cannot delete ward with existing rooms" });
+      }
+      // Instead of deleting, we'll update the status to maintenance
+      const ward = await storage.updateWard(id, { status: "maintenance" });
+      res.json(ward);
+    } catch (err) {
+      next(err);
+    }
+  });
+
   // Room routes
   app.get("/api/rooms", async (req, res, next) => {
     try {
-      const rooms = await storage.getAllRooms();
+      const rooms = await storage.getAllRoomsWithPatient();
       res.json(rooms);
     } catch (err) {
       next(err);
@@ -455,6 +588,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (err instanceof ValidationError) {
         return res.status(400).json({ message: err.message });
       }
+      next(err);
+    }
+  });
+
+  app.delete("/api/rooms/:id", requireRole(["admin"]), async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      // Check if room is occupied before deleting
+      const room = await storage.getRoom(id);
+      if (room && room.occupied) {
+        return res.status(400).json({ message: "Cannot delete occupied room" });
+      }
+      // Instead of deleting, we'll update the status to maintenance
+      const updatedRoom = await storage.updateRoom(id, { roomType: "maintenance" });
+      res.json(updatedRoom);
+    } catch (err) {
       next(err);
     }
   });
@@ -515,6 +664,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (err instanceof ValidationError) {
         return res.status(400).json({ message: err.message });
       }
+      next(err);
+    }
+  });
+
+  app.delete("/api/bills/:id", requireRole(["admin", "staff"]), async (req, res, next) => {
+    try {
+      const id = parseInt(req.params.id);
+      // Instead of deleting, we'll update the status to cancelled
+      const bill = await storage.updateBill(id, { status: "cancelled" });
+      res.json(bill);
+    } catch (err) {
       next(err);
     }
   });

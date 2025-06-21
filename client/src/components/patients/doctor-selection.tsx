@@ -20,7 +20,7 @@ interface DoctorSelectionProps {
 export default function DoctorSelection({ patientId }: DoctorSelectionProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [specialization, setSpecialization] = useState<string>("");
-  const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<(Doctor & { user: { fullName: string } }) | null>(null);
   const [openAppointmentDialog, setOpenAppointmentDialog] = useState(false);
 
   // Fetch all doctors
@@ -45,7 +45,7 @@ export default function DoctorSelection({ patientId }: DoctorSelectionProps) {
       doctor.user?.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       doctor.specialization.toLowerCase().includes(searchTerm.toLowerCase());
       
-    const matchesSpecialization = specialization === "" || doctor.specialization === specialization;
+    const matchesSpecialization = specialization === "all" || specialization === "" || doctor.specialization === specialization;
     
     return matchesSearch && matchesSpecialization;
   });
@@ -77,7 +77,7 @@ export default function DoctorSelection({ patientId }: DoctorSelectionProps) {
               <SelectValue placeholder="Filter by specialization" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Specializations</SelectItem>
+              <SelectItem value="all">All Specializations</SelectItem>
               {specializations?.map((spec) => (
                 <SelectItem key={spec} value={spec}>{spec}</SelectItem>
               ))}
@@ -172,19 +172,6 @@ export default function DoctorSelection({ patientId }: DoctorSelectionProps) {
                 queryClient.invalidateQueries({ queryKey: ["/api/patient-appointments"] });
               }}
               patientId={patientId}
-              // Pre-select the doctor
-              appointment={{
-                id: 0,
-                patientId: patientId,
-                doctorId: selectedDoctor.id,
-                date: new Date().toISOString(),
-                time: "09:00:00",
-                status: "scheduled",
-                reason: "",
-                notes: "",
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
-              }}
             />
           )}
         </DialogContent>

@@ -24,6 +24,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { ContactSupportDialog } from "@/components/ui/contact-support-dialog";
+import { RescheduleAppointmentDialog } from "@/components/ui/reschedule-appointment-dialog";
 
 export default function PatientDashboardPage() {
   const { user } = useAuth();
@@ -117,6 +119,18 @@ export default function PatientDashboardPage() {
   const handleCancelAppointment = (appointment: Appointment) => {
     setAppointmentToCancel(appointment);
     setConfirmCancelDialog(true);
+  };
+
+  const handleContactSupport = () => {
+    toast({
+      title: "Contact Support",
+      description: "Opening support chat or contact form...",
+    });
+    // In a real implementation, this would open a support chat or contact form
+  };
+
+  const handleReschedule = (appointment: Appointment) => {
+    // This will be handled by the RescheduleAppointmentDialog component
   };
 
   const upcomingAppointments = appointments?.filter((app: Appointment) => 
@@ -313,7 +327,9 @@ export default function PatientDashboardPage() {
                   <p className="text-sm text-muted-foreground mb-3">
                     Contact our healthcare team for assistance with any health concerns.
                   </p>
-                  <Button size="sm" className="w-full">Contact Support</Button>
+                  <ContactSupportDialog>
+                    <Button size="sm" className="w-full">Contact Support</Button>
+                  </ContactSupportDialog>
                 </div>
               </CardContent>
             </Card>
@@ -372,7 +388,9 @@ export default function PatientDashboardPage() {
                         {appointment.reason}
                       </p>
                       <div className="flex justify-end space-x-2">
-                        <Button variant="outline" size="sm">Reschedule</Button>
+                        <RescheduleAppointmentDialog appointment={appointment}>
+                          <Button variant="outline" size="sm">Reschedule</Button>
+                        </RescheduleAppointmentDialog>
                         <Button variant="destructive" size="sm" onClick={() => handleCancelAppointment(appointment)}>Cancel</Button>
                       </div>
                     </div>
@@ -459,7 +477,9 @@ export default function PatientDashboardPage() {
                         {appointment.reason}
                       </p>
                       <div className="flex justify-end space-x-2">
-                        <Button variant="outline" size="sm">Reschedule</Button>
+                        <RescheduleAppointmentDialog appointment={appointment}>
+                          <Button variant="outline" size="sm">Reschedule</Button>
+                        </RescheduleAppointmentDialog>
                         <Button variant="destructive" size="sm" onClick={() => handleCancelAppointment(appointment)}>Cancel</Button>
                       </div>
                     </div>

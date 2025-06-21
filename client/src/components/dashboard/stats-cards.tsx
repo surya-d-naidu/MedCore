@@ -1,6 +1,7 @@
-import { Skeleton } from "@/components/ui/skeleton";
-import { StatsCard } from "@/components/ui/stats-card";
-import { Users, CalendarClock, Stethoscope, Hospital } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Users, Calendar, Stethoscope, Bed } from "lucide-react";
+import { getQueryFn } from "@/lib/queryClient";
 
 interface DashboardStats {
   totalPatients: number;
@@ -9,82 +10,104 @@ interface DashboardStats {
   availableRooms: number;
 }
 
-interface StatsCardsProps {
-  stats?: DashboardStats;
-  isLoading: boolean;
-}
+export default function StatsCards() {
+  const { data: stats, isLoading, error } = useQuery<DashboardStats>({
+    queryKey: ["/api/dashboard/stats"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
 
-export default function StatsCards({ stats, isLoading }: StatsCardsProps) {
-  if (isLoading || !stats) {
+  if (isLoading) {
     return (
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {Array(4).fill(0).map((_, i) => (
-          <div key={i} className="bg-white rounded-xl shadow-sm p-6 border-0">
-            <div className="flex flex-col">
-              <Skeleton className="h-12 w-12 rounded-xl mb-3" />
-              <Skeleton className="h-8 w-16 mb-2" />
-              <Skeleton className="h-4 w-24 mb-3" />
-              <Skeleton className="h-4 w-full mt-4" />
-            </div>
-          </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        {[1, 2, 3, 4].map((i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Loading...</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
+            </CardContent>
+          </Card>
         ))}
       </div>
     );
   }
 
+  if (error) {
+    return (
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Error</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-red-600">--</div>
+            <p className="text-xs text-muted-foreground">Failed to load stats</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const defaultStats: DashboardStats = {
+    totalPatients: 0,
+    todayAppointments: 0,
+    availableDoctors: 0,
+    availableRooms: 0,
+  };
+
+  const currentStats = stats || defaultStats;
+
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <StatsCard
-        title="Total Patients"
-        value={stats.totalPatients}
-        icon={Users}
-        iconColor="text-primary"
-        iconBgColor="bg-primary/10"
-        trend={{
-          value: "4.75%",
-          direction: "up",
-          label: "vs last month"
-        }}
-      />
-      
-      <StatsCard
-        title="Today's Appointments"
-        value={stats.todayAppointments}
-        icon={CalendarClock}
-        iconColor="text-indigo-600"
-        iconBgColor="bg-indigo-100"
-        trend={{
-          value: "2.15%",
-          direction: "down",
-          label: "vs yesterday"
-        }}
-      />
-      
-      <StatsCard
-        title="Available Doctors"
-        value={stats.availableDoctors}
-        icon={Stethoscope}
-        iconColor="text-secondary"
-        iconBgColor="bg-secondary/10"
-        trend={{
-          value: "2",
-          direction: "up",
-          label: "more than yesterday"
-        }}
-      />
-      
-      <StatsCard
-        title="Available Rooms"
-        value={stats.availableRooms}
-        icon={Hospital}
-        iconColor="text-violet-600"
-        iconBgColor="bg-violet-100"
-        trend={{
-          value: "3",
-          direction: "down",
-          label: "less than yesterday"
-        }}
-      />
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total Patients</CardTitle>
+          <Users className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{currentStats.totalPatients}</div>
+          <p className="text-xs text-muted-foreground">
+            Registered patients
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Today's Appointments</CardTitle>
+          <Calendar className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{currentStats.todayAppointments}</div>
+          <p className="text-xs text-muted-foreground">
+            Scheduled for today
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Available Doctors</CardTitle>
+          <Stethoscope className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{currentStats.availableDoctors}</div>
+          <p className="text-xs text-muted-foreground">
+            Ready for appointments
+          </p>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Available Rooms</CardTitle>
+          <Bed className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">{currentStats.availableRooms}</div>
+          <p className="text-xs text-muted-foreground">
+            Unoccupied rooms
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,261 +1,273 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import DashboardLayout from "@/components/layout/dashboard-layout";
 import { Button } from "@/components/ui/button";
-import { DataTable } from "@/components/ui/data-table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Plus, Search, Trash2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import PatientForm from "@/components/patients/patient-form";
-import type { Patient } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { Plus, Search, MoreHorizontal, Edit, Trash2, Eye } from "lucide-react";
+import { getQueryFn, getMutationFn } from "@/lib/queryClient";
+import { Patient } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export default function PatientsPage() {
-  const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [editingPatient, setEditingPatient] = useState<Patient | null>(null);
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
 
-  const { data: patients, isLoading } = useQuery<Patient[]>({
+  // Fetch patients
+  const { data: patients, isLoading, error } = useQuery<Patient[]>({
     queryKey: ["/api/patients"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
   });
 
-  const filteredPatients = patients?.filter(patient => {
-    const matchesSearch = 
-      `${patient.firstName} ${patient.lastName}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      patient.phone?.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesStatus = statusFilter === "all" || patient.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  }) || [];
-
-  const deletePatient = async (id: number) => {
-    try {
-      await apiRequest("DELETE", `/api/patients/${id}`);
+  // Delete patient mutation
+  const deletePatientMutation = useMutation({
+    mutationFn: getMutationFn({
+      method: "DELETE",
+      on401: "redirect",
+      on403: "toast",
+    }),
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
       toast({
-        title: "Success",
-        description: "Patient deleted successfully",
+        title: "Patient deleted",
+        description: "Patient has been successfully deleted.",
       });
-    } catch (error) {
+    },
+    onError: () => {
       toast({
         title: "Error",
-        description: "Failed to delete patient",
+        description: "Failed to delete patient. Please try again.",
         variant: "destructive",
       });
+    },
+  });
+
+  // Filter patients based on search query
+  const filteredPatients = patients?.filter(patient =>
+    patient.firstName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    patient.lastName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    patient.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    patient.phone?.includes(searchQuery)
+  ) || [];
+
+  const handleDeletePatient = (patient: Patient) => {
+    if (confirm(`Are you sure you want to delete ${patient.firstName} ${patient.lastName}?`)) {
+      deletePatientMutation.mutate(`/api/patients/${patient.id}`);
     }
   };
 
-  const columns = [
-    {
-      key: "name",
-      header: "Patient",
-      cell: (patient: Patient) => {
-        const initials = `${patient.firstName[0]}${patient.lastName[0]}`;
-        
-        return (
-          <div className="flex items-center">
-            <Avatar className="h-8 w-8 bg-blue-100 mr-3">
-              <AvatarFallback className="text-primary-700">{initials}</AvatarFallback>
-            </Avatar>
-            <div>
-              <div className="text-sm font-medium text-neutral-800">{`${patient.firstName} ${patient.lastName}`}</div>
-              <div className="text-xs text-neutral-500">{patient.email}</div>
-            </div>
-          </div>
-        );
-      }
-    },
-    {
-      key: "id",
-      header: "ID",
-      cell: (patient: Patient) => (
-        <span className="text-sm text-neutral-500">P-{String(patient.id).padStart(4, '0')}</span>
-      )
-    },
-    {
-      key: "gender",
-      header: "Gender",
-      cell: (patient: Patient) => (
-        <span className="text-sm text-neutral-600">{patient.gender}</span>
-      )
-    },
-    {
-      key: "dateOfBirth",
-      header: "Date of Birth",
-      cell: (patient: Patient) => {
-        const dob = new Date(patient.dateOfBirth);
-        const today = new Date();
-        let age = today.getFullYear() - dob.getFullYear();
-        const monthDiff = today.getMonth() - dob.getMonth();
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
-          age--;
-        }
-        
-        return (
-          <div>
-            <span className="text-sm text-neutral-600">{dob.toLocaleDateString()}</span>
-            <span className="text-xs text-neutral-500 block">{age} years</span>
-          </div>
-        );
-      }
-    },
-    {
-      key: "phone",
-      header: "Phone",
-      cell: (patient: Patient) => (
-        <span className="text-sm text-neutral-600">{patient.phone}</span>
-      )
-    },
-    {
-      key: "address",
-      header: "Address",
-      cell: (patient: Patient) => (
-        <span className="text-sm text-neutral-600 truncate max-w-[150px] block">{patient.address}</span>
-      )
-    },
-    {
-      key: "status",
-      header: "Status",
-      cell: (patient: Patient) => {
-        const statusConfig = {
-          active: { className: "bg-green-100 text-green-800", label: "Active" },
-          discharged: { className: "bg-blue-100 text-blue-800", label: "Discharged" },
-          critical: { className: "bg-red-100 text-red-800", label: "Critical" },
-        };
-        
-        const config = statusConfig[patient.status as keyof typeof statusConfig] || 
-          statusConfig.active;
-        
-        return (
-          <Badge variant="outline" className={`${config.className} px-2 py-1 text-xs rounded-full`}>
-            {config.label}
-          </Badge>
-        );
-      }
-    },
-  ];
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "active":
+        return "bg-green-100 text-green-800";
+      case "discharged":
+        return "bg-gray-100 text-gray-800";
+      case "critical":
+        return "bg-red-100 text-red-800";
+      default:
+        return "bg-blue-100 text-blue-800";
+    }
+  };
 
-  const actions = (patient: Patient) => (
-    <div className="flex space-x-3">
-      <Button
-        variant="ghost"
-        size="icon"
-        className="text-primary-600 hover:text-primary-900"
-        onClick={() => setEditingPatient(patient)}
-      >
-        <Edit className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="text-red-600 hover:text-red-900"
-        onClick={() => {
-          if (confirm("Are you sure you want to delete this patient?")) {
-            deletePatient(patient.id);
-          }
-        }}
-      >
-        <Trash2 className="h-4 w-4" />
-      </Button>
-    </div>
-  );
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName?.[0] || ''}${lastName?.[0] || ''}`.toUpperCase();
+  };
+
+  if (error) {
+    return (
+      <DashboardLayout title="Patients">
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Failed to load patients</p>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
-    <DashboardLayout title="Patients Management">
+    <DashboardLayout title="Patients">
       <div className="space-y-6">
-        {/* Search and Filter Bar */}
-        <div className="bg-white rounded-lg shadow-sm p-5 border border-neutral-100">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div className="flex flex-col sm:flex-row gap-3">
-              <div className="relative sm:w-64">
-                <Input
-                  type="text"
-                  placeholder="Search patients..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 pr-4 py-2 w-full"
-                />
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 h-4 w-4" />
-              </div>
-              
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="discharged">Discharged</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary-800 text-white hover:bg-primary-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Patient
-            </Button>
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold">Patients</h1>
+            <p className="text-muted-foreground">Manage patient information and records</p>
           </div>
+          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Patient
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Add New Patient</DialogTitle>
+                <DialogDescription>
+                  Enter the patient's information to create a new record.
+                </DialogDescription>
+              </DialogHeader>
+              <PatientForm
+                onSuccess={() => {
+                  setIsAddDialogOpen(false);
+                  queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+                }}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
-        
-        {/* Patients Table */}
-        <DataTable
-          data={filteredPatients}
-          columns={columns}
-          actions={actions}
-          isLoading={isLoading}
-        />
+
+        {/* Search */}
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Search patients by name, email, or phone..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        {/* Patients Grid */}
+        {isLoading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <Card key={i}>
+                <CardHeader>
+                  <div className="flex items-center space-x-4">
+                    <div className="h-12 w-12 bg-gray-200 rounded-full animate-pulse"></div>
+                    <div className="space-y-2">
+                      <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="h-3 bg-gray-200 rounded animate-pulse w-1/2"></div>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    <div className="h-3 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3"></div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : filteredPatients.length > 0 ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredPatients.map((patient) => (
+              <Card key={patient.id}>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          {getInitials(patient.firstName, patient.lastName)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="text-lg">
+                          {patient.firstName} {patient.lastName}
+                        </CardTitle>
+                        <CardDescription>
+                          {patient.email || patient.phone}
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>
+                          <Eye className="h-4 w-4 mr-2" />
+                          View Details
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setEditingPatient(patient)}>
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => handleDeletePatient(patient)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Status</span>
+                      <Badge className={getStatusColor(patient.status)}>
+                        {patient.status}
+                      </Badge>
+                    </div>
+                    {patient.dateOfBirth && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Age</span>
+                        <span className="text-sm">
+                          {new Date().getFullYear() - new Date(patient.dateOfBirth).getFullYear()} years
+                        </span>
+                      </div>
+                    )}
+                    {patient.gender && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">Gender</span>
+                        <span className="text-sm capitalize">{patient.gender}</span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <Card>
+            <CardContent className="text-center py-12">
+              <p className="text-muted-foreground">
+                {searchQuery ? "No patients found matching your search." : "No patients found."}
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
-      {/* Add Patient Modal */}
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Add New Patient</DialogTitle>
-          </DialogHeader>
-          <PatientForm 
-            onSuccess={() => {
-              setIsAddModalOpen(false);
-              queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Edit Patient Modal */}
-      <Dialog open={!!editingPatient} onOpenChange={(open) => !open && setEditingPatient(null)}>
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>Edit Patient</DialogTitle>
-          </DialogHeader>
-          {editingPatient && (
-            <PatientForm 
+      {/* Edit Patient Dialog */}
+      {editingPatient && (
+        <Dialog open={!!editingPatient} onOpenChange={() => setEditingPatient(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Edit Patient</DialogTitle>
+              <DialogDescription>
+                Update the patient's information.
+              </DialogDescription>
+            </DialogHeader>
+            <PatientForm
               patient={editingPatient}
               onSuccess={() => {
                 setEditingPatient(null);
                 queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
               }}
             />
-          )}
-        </DialogContent>
-      </Dialog>
+          </DialogContent>
+        </Dialog>
+      )}
     </DashboardLayout>
   );
 }

@@ -13,6 +13,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Link } from "wouter";
+import { QuickActionsMenu } from "@/components/ui/quick-actions-menu";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -30,6 +32,11 @@ function MainLayout({ children, title }: DashboardLayoutProps) {
         .join("")
         .toUpperCase()
     : user?.username?.substring(0, 2).toUpperCase() || "US";
+
+  const handleSettingsClick = () => {
+    // Navigate to settings page
+    window.location.href = "/settings";
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -103,10 +110,12 @@ function MainLayout({ children, title }: DashboardLayoutProps) {
                     </div>
                   </div>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="flex items-center cursor-pointer rounded-lg focus:bg-muted p-2">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile Settings</span>
-                  </DropdownMenuItem>
+                  <Link href="/settings">
+                    <DropdownMenuItem className="flex items-center cursor-pointer rounded-lg focus:bg-muted p-2">
+                      <User className="mr-2 h-4 w-4" />
+                      <span>Profile Settings</span>
+                    </DropdownMenuItem>
+                  </Link>
                   <DropdownMenuItem 
                     className="flex items-center cursor-pointer rounded-lg focus:bg-muted text-destructive focus:text-destructive p-2"
                     onClick={() => logoutMutation.mutate()}
@@ -131,13 +140,23 @@ function MainLayout({ children, title }: DashboardLayoutProps) {
             <div className="flex justify-between items-center mb-8">
               <h2 className="text-2xl font-bold text-foreground">{title}</h2>
               <div className="flex items-center space-x-3">
-                <Button variant="outline" size="sm" className="rounded-lg h-9">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="rounded-lg h-9"
+                  onClick={handleSettingsClick}
+                >
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </Button>
-                <Button size="sm" className="btn-gradient rounded-lg h-9">
-                  New Entry
-                </Button>
+                <QuickActionsMenu>
+                  <Button 
+                    size="sm" 
+                    className="btn-gradient rounded-lg h-9"
+                  >
+                    New Entry
+                  </Button>
+                </QuickActionsMenu>
               </div>
             </div>
             {children}
