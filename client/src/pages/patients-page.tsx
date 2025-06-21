@@ -41,6 +41,7 @@ export default function PatientsPage() {
     }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       toast({
         title: "Patient deleted",
         description: "Patient has been successfully deleted.",
@@ -123,6 +124,7 @@ export default function PatientsPage() {
                 onSuccess={() => {
                   setIsAddDialogOpen(false);
                   queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+                  queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
                 }}
               />
             </DialogContent>
@@ -249,25 +251,24 @@ export default function PatientsPage() {
       </div>
 
       {/* Edit Patient Dialog */}
-      {editingPatient && (
-        <Dialog open={!!editingPatient} onOpenChange={() => setEditingPatient(null)}>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Edit Patient</DialogTitle>
-              <DialogDescription>
-                Update the patient's information.
-              </DialogDescription>
-            </DialogHeader>
-            <PatientForm
-              patient={editingPatient}
-              onSuccess={() => {
-                setEditingPatient(null);
-                queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-              }}
-            />
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={!!editingPatient} onOpenChange={(open) => !open && setEditingPatient(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Patient</DialogTitle>
+            <DialogDescription>
+              Update the patient's information.
+            </DialogDescription>
+          </DialogHeader>
+          <PatientForm
+            patient={editingPatient!}
+            onSuccess={() => {
+              setEditingPatient(null);
+              queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 }

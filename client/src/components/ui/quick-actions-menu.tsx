@@ -1,15 +1,16 @@
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ChevronDown, Plus, Calendar as CalendarIcon, User, FileText, Receipt, BedDouble, Pill } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { Link } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+
+import { queryClient } from "@/lib/queryClient";
+import PatientForm from "@/components/patients/patient-form";
+import AppointmentForm from "@/components/appointments/appointment-form";
+import BillingForm from "@/components/billing/billing-form";
 
 interface QuickActionsMenuProps {
   children: React.ReactNode;
@@ -19,6 +20,30 @@ export function QuickActionsMenu({ children }: QuickActionsMenuProps) {
   const [isNewPatientOpen, setIsNewPatientOpen] = useState(false);
   const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
   const [isNewBillOpen, setIsNewBillOpen] = useState(false);
+  const { toast } = useToast();
+
+  const handleSuccess = (type: string) => {
+    setIsNewPatientOpen(false);
+    setIsNewAppointmentOpen(false);
+    setIsNewBillOpen(false);
+
+    toast({
+      title: "Success",
+      description: `${type} has been created successfully.`,
+    });
+
+    if (type === "Patient") {
+      queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+    }
+    if (type === "Appointment") {
+      queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+    }
+    if (type === "Bill") {
+      queryClient.invalidateQueries({ queryKey: ["/api/bills"] });
+    }
+  };
 
   return (
     <>
@@ -82,217 +107,49 @@ export function QuickActionsMenu({ children }: QuickActionsMenuProps) {
 
       {/* Quick Add Patient Dialog */}
       <Dialog open={isNewPatientOpen} onOpenChange={setIsNewPatientOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Plus className="h-5 w-5" />
-              Quick Add Patient
+              <User className="h-5 w-5" />
+              Add New Patient
             </DialogTitle>
             <DialogDescription>
-              Add a new patient to the system with basic information.
+              Add a new patient to the system.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" placeholder="John" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" placeholder="Doe" />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="john.doe@example.com" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" placeholder="+1 234 567 890" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="gender">Gender</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select gender" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewPatientOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => setIsNewPatientOpen(false)}>
-              Add Patient
-            </Button>
-          </DialogFooter>
+          <PatientForm onSuccess={() => handleSuccess("Patient")} />
         </DialogContent>
       </Dialog>
 
       {/* Quick Schedule Appointment Dialog */}
       <Dialog open={isNewAppointmentOpen} onOpenChange={setIsNewAppointmentOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5" />
-              Quick Schedule Appointment
+              Schedule New Appointment
             </DialogTitle>
             <DialogDescription>
               Schedule a new appointment for a patient.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="patient">Patient</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select patient" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">John Doe</SelectItem>
-                  <SelectItem value="2">Jane Smith</SelectItem>
-                  <SelectItem value="3">Robert Johnson</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="doctor">Doctor</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select doctor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">Dr. Sarah Wilson</SelectItem>
-                  <SelectItem value="2">Dr. Michael Brown</SelectItem>
-                  <SelectItem value="3">Dr. Emily Davis</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Appointment Date</Label>
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    Pick a date
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar
-                    mode="single"
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="time">Time</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select time" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="09:00">9:00 AM</SelectItem>
-                  <SelectItem value="10:00">10:00 AM</SelectItem>
-                  <SelectItem value="11:00">11:00 AM</SelectItem>
-                  <SelectItem value="14:00">2:00 PM</SelectItem>
-                  <SelectItem value="15:00">3:00 PM</SelectItem>
-                  <SelectItem value="16:00">4:00 PM</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="reason">Reason</Label>
-              <Input id="reason" placeholder="General checkup, consultation, etc." />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewAppointmentOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => setIsNewAppointmentOpen(false)}>
-              Schedule Appointment
-            </Button>
-          </DialogFooter>
+          <AppointmentForm onSuccess={() => handleSuccess("Appointment")} />
         </DialogContent>
       </Dialog>
 
       {/* Quick Create Bill Dialog */}
       <Dialog open={isNewBillOpen} onOpenChange={setIsNewBillOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Receipt className="h-5 w-5" />
-              Quick Create Bill
+              Create New Bill
             </DialogTitle>
             <DialogDescription>
               Create a new bill for a patient.
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="billPatient">Patient</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select patient" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">John Doe</SelectItem>
-                  <SelectItem value="2">Jane Smith</SelectItem>
-                  <SelectItem value="3">Robert Johnson</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="service">Service</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select service" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="consultation">Consultation</SelectItem>
-                  <SelectItem value="surgery">Surgery</SelectItem>
-                  <SelectItem value="medication">Medication</SelectItem>
-                  <SelectItem value="lab-test">Lab Test</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount ($)</Label>
-              <Input id="amount" type="number" placeholder="0.00" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Input id="description" placeholder="Service description" />
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsNewBillOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => setIsNewBillOpen(false)}>
-              Create Bill
-            </Button>
-          </DialogFooter>
+          <BillingForm onSuccess={() => handleSuccess("Bill")} />
         </DialogContent>
       </Dialog>
     </>

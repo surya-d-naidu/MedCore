@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Edit, Plus, Search, Trash2, BedDouble } from "lucide-react";
+import { Edit, Plus, Search, Trash2, BedDouble, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import WardForm from "@/components/wards/ward-form";
 import type { Ward, Room } from "@shared/schema";
@@ -51,6 +51,7 @@ export default function WardsPage() {
     try {
       await apiRequest("DELETE", `/api/wards/${id}`);
       queryClient.invalidateQueries({ queryKey: ["/api/wards"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       toast({
         title: "Success",
         description: "Ward deleted successfully",
@@ -68,6 +69,7 @@ export default function WardsPage() {
     try {
       await apiRequest("DELETE", `/api/rooms/${id}`);
       queryClient.invalidateQueries({ queryKey: ["/api/rooms"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       toast({
         title: "Success",
         description: "Room deleted successfully",
@@ -291,22 +293,32 @@ export default function WardsPage() {
             </div>
           </div>
 
-          <TabsContent value="wards" className="mt-0">
-            <DataTable
-              data={filteredWards}
-              columns={wardColumns}
-              actions={wardActions}
-              isLoading={isLoadingWards}
-            />
+          <TabsContent value="wards">
+            {isLoadingWards ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <DataTable
+                data={filteredWards}
+                columns={wardColumns}
+                actions={wardActions}
+              />
+            )}
           </TabsContent>
 
-          <TabsContent value="rooms" className="mt-0">
-            <DataTable
-              data={filteredRooms}
-              columns={roomColumns}
-              actions={roomActions}
-              isLoading={isLoadingRooms}
-            />
+          <TabsContent value="rooms">
+            {isLoadingRooms ? (
+              <div className="flex items-center justify-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : (
+              <DataTable
+                data={filteredRooms}
+                columns={roomColumns}
+                actions={roomActions}
+              />
+            )}
           </TabsContent>
         </Tabs>
       </div>
@@ -321,6 +333,7 @@ export default function WardsPage() {
             onSuccess={() => {
               setIsAddWardModalOpen(false);
               queryClient.invalidateQueries({ queryKey: ["/api/wards"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
             }}
           />
         </DialogContent>
@@ -338,6 +351,7 @@ export default function WardsPage() {
               onSuccess={() => {
                 setEditingWard(null);
                 queryClient.invalidateQueries({ queryKey: ["/api/wards"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
               }}
             />
           )}

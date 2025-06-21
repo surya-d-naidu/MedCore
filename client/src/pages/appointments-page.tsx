@@ -15,7 +15,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Edit, Plus, Search, Trash2, User, UserRound } from "lucide-react";
+import { CalendarIcon, Edit, Plus, Search, Trash2, User, UserRound, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import AppointmentForm from "@/components/appointments/appointment-form";
 import { format } from "date-fns";
@@ -61,6 +61,7 @@ export default function AppointmentsPage() {
     try {
       await apiRequest("DELETE", `/api/appointments/${id}`);
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       toast({
         title: "Success",
         description: "Appointment deleted successfully",
@@ -248,24 +249,33 @@ export default function AppointmentsPage() {
         </div>
         
         {/* Appointments Table */}
-        <DataTable
-          data={filteredAppointments}
-          columns={columns}
-          actions={actions}
-          isLoading={isLoading}
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <DataTable
+            data={filteredAppointments}
+            columns={columns}
+            actions={actions}
+          />
+        )}
       </div>
 
       {/* Add Appointment Modal */}
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
-            <DialogTitle>Schedule New Appointment</DialogTitle>
+            <DialogTitle>{editingAppointment ? "Edit" : "New"} Appointment</DialogTitle>
           </DialogHeader>
           <AppointmentForm 
+            key={editingAppointment ? editingAppointment.id : "new"}
+            appointment={editingAppointment ?? undefined}
             onSuccess={() => {
               setIsAddModalOpen(false);
+              setEditingAppointment(null);
               queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
             }}
           />
         </DialogContent>

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Edit, Plus, Search, Trash2 } from "lucide-react";
+import { Edit, Plus, Search, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import DoctorForm from "@/components/doctors/doctor-form";
 import type { Doctor, User } from "@shared/schema";
@@ -36,6 +36,7 @@ export default function DoctorsPage() {
     try {
       await apiRequest("DELETE", `/api/doctors/${id}`);
       queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
       toast({
         title: "Success",
         description: "Doctor deleted successfully",
@@ -181,12 +182,17 @@ export default function DoctorsPage() {
         </div>
         
         {/* Doctors Table */}
-        <DataTable
-          data={filteredDoctors}
-          columns={columns}
-          actions={actions}
-          isLoading={isLoading}
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <DataTable
+            data={filteredDoctors}
+            columns={columns}
+            actions={actions}
+          />
+        )}
       </div>
 
       {/* Add Doctor Modal */}
@@ -199,6 +205,8 @@ export default function DoctorsPage() {
             onSuccess={() => {
               setIsAddModalOpen(false);
               queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/users"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
             }}
           />
         </DialogContent>
@@ -216,6 +224,7 @@ export default function DoctorsPage() {
               onSuccess={() => {
                 setEditingDoctor(null);
                 queryClient.invalidateQueries({ queryKey: ["/api/doctors"] });
+                queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
               }}
             />
           )}

@@ -3,6 +3,8 @@ import { Link } from "wouter";
 import { cn } from "@/lib/utils";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
+import { getQueryFn } from "@/lib/queryClient";
 import {
   HomeIcon,
   Users,
@@ -59,6 +61,18 @@ export function Sidebar() {
   const { logoutMutation } = useAuth();
   const { user } = useAuth();
 
+  // Fetch dashboard stats
+  interface DashboardStats {
+    totalPatients: number;
+    todayAppointments: number;
+    availableDoctors: number;
+    availableRooms: number;
+  }
+  const { data: stats } = useQuery<DashboardStats>({
+    queryKey: ["/api/dashboard/stats"],
+    queryFn: getQueryFn({ on401: "returnNull" }),
+  });
+
   const handleLogout = () => {
     logoutMutation.mutate();
   };
@@ -100,8 +114,8 @@ export function Sidebar() {
         <nav className="space-y-0.5 pr-1">
           <SidebarItem href="/" icon={<HomeIcon />} label="Dashboard" />
           <SidebarItem href="/doctors" icon={<UserSquare />} label="Doctors" />
-          <SidebarItem href="/patients" icon={<Users />} label="Patients" count={24} />
-          <SidebarItem href="/appointments" icon={<Calendar />} label="Appointments" count={5} />
+          <SidebarItem href="/patients" icon={<Users />} label="Patients" count={stats?.totalPatients || 0} />
+          <SidebarItem href="/appointments" icon={<Calendar />} label="Appointments" count={stats?.todayAppointments || 0} />
           <SidebarItem href="/medical-records" icon={<FileText />} label="Medical Records" />
           <SidebarItem href="/prescriptions" icon={<ClipboardList />} label="Prescriptions" />
           <SidebarItem href="/wards" icon={<BedDouble />} label="Wards/Rooms" />
