@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { CalendarIcon, Download, Edit, Eye, Plus, Search, Trash2, UserRound } from "lucide-react";
+import { CalendarIcon, Download, Edit, Eye, Plus, Search, Trash2, UserRound, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import PrescriptionForm from "@/components/prescriptions/prescription-form";
 import { format } from "date-fns";
@@ -170,8 +170,19 @@ export default function PrescriptionsPage() {
     </div>
   );
 
+  const actionButton = (
+    <Button
+      onClick={() => setIsAddModalOpen(true)}
+      size="sm"
+      className="btn-gradient rounded-lg h-9"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      New Prescription
+    </Button>
+  );
+
   return (
-    <DashboardLayout title="Prescriptions">
+    <DashboardLayout title="Prescriptions" actionButton={actionButton}>
       <div className="space-y-6">
         {/* Search and Filter Bar */}
         <div className="bg-white rounded-lg shadow-sm p-5 border border-neutral-100">
@@ -222,24 +233,21 @@ export default function PrescriptionsPage() {
                 </PopoverContent>
               </Popover>
             </div>
-            
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary-800 text-white hover:bg-primary-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Prescription
-            </Button>
           </div>
         </div>
         
         {/* Prescriptions Table */}
-        <DataTable
-          data={filteredPrescriptions}
-          columns={columns}
-          actions={actions}
-          isLoading={isLoading}
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <DataTable
+            data={filteredPrescriptions}
+            columns={columns}
+            actions={actions}
+          />
+        )}
       </div>
 
       {/* Add Prescription Modal */}
@@ -333,27 +341,27 @@ export default function PrescriptionsPage() {
                       {Array.isArray(viewingPrescription.medicines) && 
                        Array.isArray(viewingPrescription.dosage) &&
                        Array.isArray(viewingPrescription.duration) ? (
-                        viewingPrescription.medicines.map((medicine, index) => (
+                        (viewingPrescription.medicines as any[]).map((medicine, index) => (
                           <tr key={index}>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-neutral-800">{medicine}</td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-neutral-600">
-                              {viewingPrescription.dosage[index] || '-'}
+                              {(viewingPrescription.dosage as any[])[index] || '-'}
                             </td>
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-neutral-600">
-                              {viewingPrescription.duration[index] || '-'}
+                              {(viewingPrescription.duration as any[])[index] || '-'}
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-neutral-800">
-                            {viewingPrescription.medicines}
+                            {viewingPrescription.medicines as any}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-neutral-600">
-                            {viewingPrescription.dosage}
+                            {viewingPrescription.dosage as any}
                           </td>
                           <td className="px-4 py-3 whitespace-nowrap text-sm text-neutral-600">
-                            {viewingPrescription.duration}
+                            {viewingPrescription.duration as any}
                           </td>
                         </tr>
                       )}

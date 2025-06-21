@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, CreditCard, Download, Edit, Eye, FilePlus, Plus, Search, Trash2 } from "lucide-react";
+import { CalendarIcon, CreditCard, Download, Edit, Eye, FilePlus, Plus, Search, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import BillingForm from "@/components/billing/billing-form";
 import { format } from "date-fns";
@@ -208,8 +208,19 @@ export default function BillingPage() {
     </div>
   );
 
+  const actionButton = (
+    <Button
+      onClick={() => setIsAddModalOpen(true)}
+      size="sm"
+      className="btn-gradient rounded-lg h-9"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      New Bill
+    </Button>
+  );
+
   return (
-    <DashboardLayout title="Billing">
+    <DashboardLayout title="Billing" actionButton={actionButton}>
       <div className="space-y-6">
         {/* Search and Filter Bar */}
         <div className="bg-white rounded-lg shadow-sm p-5 border border-neutral-100">
@@ -273,24 +284,21 @@ export default function BillingPage() {
                 </PopoverContent>
               </Popover>
             </div>
-            
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary-800 text-white hover:bg-primary-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Create Bill
-            </Button>
           </div>
         </div>
         
         {/* Bills Table */}
-        <DataTable
-          data={filteredBills}
-          columns={columns}
-          actions={actions}
-          isLoading={isLoading}
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <DataTable
+            data={filteredBills}
+            columns={columns}
+            actions={actions}
+          />
+        )}
       </div>
 
       {/* Add Bill Modal */}

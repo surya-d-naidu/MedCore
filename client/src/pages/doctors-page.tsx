@@ -154,8 +154,19 @@ export default function DoctorsPage() {
     </div>
   );
 
+  const actionButton = (
+    <Button
+      onClick={() => setIsAddModalOpen(true)}
+      size="sm"
+      className="btn-gradient rounded-lg h-9"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      New Doctor
+    </Button>
+  );
+
   return (
-    <DashboardLayout title="Doctors Management">
+    <DashboardLayout title="Doctors Management" actionButton={actionButton}>
       <div className="space-y-6">
         {/* Search and Action Bar */}
         <div className="bg-white rounded-lg shadow-sm p-5 border border-neutral-100">
@@ -170,14 +181,6 @@ export default function DoctorsPage() {
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 h-4 w-4" />
             </div>
-            
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary-800 text-white hover:bg-primary-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Doctor
-            </Button>
           </div>
         </div>
         

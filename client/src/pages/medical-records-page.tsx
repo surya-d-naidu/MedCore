@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon, Edit, Eye, File, FileText, Plus, Search, Trash2 } from "lucide-react";
+import { CalendarIcon, Edit, Eye, File, FileText, Plus, Search, Trash2, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import RecordForm from "@/components/medical-records/record-form";
 import { format } from "date-fns";
@@ -160,8 +160,19 @@ export default function MedicalRecordsPage() {
     </div>
   );
 
+  const actionButton = (
+    <Button
+      onClick={() => setIsAddModalOpen(true)}
+      size="sm"
+      className="btn-gradient rounded-lg h-9"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      New Record
+    </Button>
+  );
+
   return (
-    <DashboardLayout title="Medical Records">
+    <DashboardLayout title="Medical Records" actionButton={actionButton}>
       <div className="space-y-6">
         {/* Search and Filter Bar */}
         <div className="bg-white rounded-lg shadow-sm p-5 border border-neutral-100">
@@ -212,24 +223,21 @@ export default function MedicalRecordsPage() {
                 </PopoverContent>
               </Popover>
             </div>
-            
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary-800 text-white hover:bg-primary-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Medical Record
-            </Button>
           </div>
         </div>
         
         {/* Medical Records Table */}
-        <DataTable
-          data={filteredRecords}
-          columns={columns}
-          actions={actions}
-          isLoading={isLoading}
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center h-64">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          </div>
+        ) : (
+          <DataTable
+            data={filteredRecords}
+            columns={columns}
+            actions={actions}
+          />
+        )}
       </div>
 
       {/* Add Medical Record Modal */}
@@ -321,7 +329,7 @@ export default function MedicalRecordsPage() {
                   <h4 className="font-medium mb-2 text-neutral-800">Attachments</h4>
                   <div className="bg-white border border-neutral-200 rounded-md p-3 flex flex-wrap gap-2">
                     {Array.isArray(viewingRecord.attachments) ? (
-                      viewingRecord.attachments.map((attachment, index) => (
+                      viewingRecord.attachments.map((attachment: any, index: number) => (
                         <div key={index} className="flex items-center bg-neutral-50 p-2 rounded-md">
                           <File className="h-4 w-4 text-neutral-500 mr-2" />
                           <span className="text-sm">{attachment.name || `Attachment ${index + 1}`}</span>

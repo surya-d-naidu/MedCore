@@ -97,8 +97,15 @@ export default function PatientsPage() {
     );
   }
 
+  const actionButton = (
+    <Button onClick={() => setIsAddDialogOpen(true)} size="sm" className="btn-gradient rounded-lg h-9">
+      <Plus className="h-4 w-4 mr-2" />
+      New Patient
+    </Button>
+  );
+
   return (
-    <DashboardLayout title="Patients">
+    <DashboardLayout title="Patients" actionButton={actionButton}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -106,29 +113,6 @@ export default function PatientsPage() {
             <h1 className="text-3xl font-bold">Patients</h1>
             <p className="text-muted-foreground">Manage patient information and records</p>
           </div>
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Patient
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl">
-              <DialogHeader>
-                <DialogTitle>Add New Patient</DialogTitle>
-                <DialogDescription>
-                  Enter the patient's information to create a new record.
-                </DialogDescription>
-              </DialogHeader>
-              <PatientForm
-                onSuccess={() => {
-                  setIsAddDialogOpen(false);
-                  queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
-                  queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
-                }}
-              />
-            </DialogContent>
-          </Dialog>
         </div>
 
         {/* Search */}
@@ -249,6 +233,25 @@ export default function PatientsPage() {
           </Card>
         )}
       </div>
+
+      {/* Add Patient Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Add New Patient</DialogTitle>
+            <DialogDescription>
+              Enter the patient's information to create a new record.
+            </DialogDescription>
+          </DialogHeader>
+          <PatientForm
+            onSuccess={() => {
+              setIsAddDialogOpen(false);
+              queryClient.invalidateQueries({ queryKey: ["/api/patients"] });
+              queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Edit Patient Dialog */}
       <Dialog open={!!editingPatient} onOpenChange={(open) => !open && setEditingPatient(null)}>

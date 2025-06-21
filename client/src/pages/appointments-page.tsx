@@ -173,8 +173,19 @@ export default function AppointmentsPage() {
     </div>
   );
 
+  const actionButton = (
+    <Button
+      onClick={() => setIsAddModalOpen(true)}
+      size="sm"
+      className="btn-gradient rounded-lg h-9"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      New Appointment
+    </Button>
+  );
+
   return (
-    <DashboardLayout title="Appointments">
+    <DashboardLayout title="Appointments" actionButton={actionButton}>
       <div className="space-y-6">
         {/* Search and Filter Bar */}
         <div className="bg-white rounded-lg shadow-sm p-5 border border-neutral-100">
@@ -237,14 +248,6 @@ export default function AppointmentsPage() {
                 </PopoverContent>
               </Popover>
             </div>
-            
-            <Button
-              onClick={() => setIsAddModalOpen(true)}
-              className="bg-primary-800 text-white hover:bg-primary-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              New Appointment
-            </Button>
           </div>
         </div>
         

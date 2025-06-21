@@ -260,8 +260,19 @@ export default function WardsPage() {
     </div>
   );
 
+  const actionButton = (
+    <Button
+      onClick={() => activeTab === 'wards' ? setIsAddWardModalOpen(true) : setIsAddRoomModalOpen(true)}
+      size="sm"
+      className="btn-gradient rounded-lg h-9"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      New {activeTab === 'wards' ? 'Ward' : 'Room'}
+    </Button>
+  );
+
   return (
-    <DashboardLayout title="Wards & Rooms Management">
+    <DashboardLayout title="Wards & Rooms Management" actionButton={actionButton}>
       <div className="space-y-6">
         {/* Tabs for Wards and Rooms */}
         <Tabs defaultValue="wards" value={activeTab} onValueChange={setActiveTab}>
@@ -282,14 +293,6 @@ export default function WardsPage() {
                 />
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-neutral-400 h-4 w-4" />
               </div>
-              
-              <Button
-                onClick={() => activeTab === "wards" ? setIsAddWardModalOpen(true) : setIsAddRoomModalOpen(true)}
-                className="bg-primary-800 text-white hover:bg-primary-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add {activeTab === "wards" ? "Ward" : "Room"}
-              </Button>
             </div>
           </div>
 

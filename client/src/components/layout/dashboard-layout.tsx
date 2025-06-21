@@ -19,9 +19,10 @@ import { QuickActionsMenu } from "@/components/ui/quick-actions-menu";
 interface DashboardLayoutProps {
   children: ReactNode;
   title: string;
+  actionButton?: ReactNode;
 }
 
-function MainLayout({ children, title }: DashboardLayoutProps) {
+function MainLayout({ children, title, actionButton }: DashboardLayoutProps) {
   const { toggle } = useSidebar();
   const { user, logoutMutation } = useAuth();
 
@@ -149,14 +150,7 @@ function MainLayout({ children, title }: DashboardLayoutProps) {
                   <Settings className="h-4 w-4 mr-2" />
                   Settings
                 </Button>
-                <QuickActionsMenu>
-                  <Button 
-                    size="sm" 
-                    className="btn-gradient rounded-lg h-9"
-                  >
-                    New Entry
-                  </Button>
-                </QuickActionsMenu>
+                {actionButton}
               </div>
             </div>
             {children}

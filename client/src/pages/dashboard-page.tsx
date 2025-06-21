@@ -8,8 +8,15 @@ import { Button } from "@/components/ui/button";
 import { Download, ChevronDown } from "lucide-react";
 
 export default function DashboardPage() {
+  const actionButton = (
+    <QuickActionsMenu>
+      <Button size="sm" className="btn-gradient rounded-lg h-9">
+        New Entry
+      </Button>
+    </QuickActionsMenu>
+  );
   return (
-    <DashboardLayout title="Dashboard">
+    <DashboardLayout title="Dashboard" actionButton={actionButton}>
       <div className="space-y-6">
         {/* Stats Cards */}
         <StatsCards />
