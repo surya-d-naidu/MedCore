@@ -30,7 +30,7 @@ A comprehensive hospital management system built with modern web technologies. M
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/MedCore.git
+git clone https://github.com/surya-d-naidu/MedCore.git
 cd MedCore
 ```
 
